@@ -1,0 +1,51 @@
+{
+  "name": "@sentinel-sap/autonomous-capital-agent",
+  "version": "1.0.0",
+  "description": "Sentinel-SAP: Autonomous Solana Capital & Treasury Routing Agent built on OOBE Protocol SAP v2 (@oobe-protocol-labs/synapse-sap-sdk), MultiHopper Programmable Routing MCP/API, Solana Actions v2.2.1 Blinks, and 10-Layer Pre-Trade SPL/Token-2022 Risk & Rent-Reclaim Guardrails.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "sentinel-sap": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "demo": "tsx scripts/demo_proof.ts",
+    "mcp": "tsx src/mcp-server.ts --stdio",
+    "blink": "tsx src/http-server.ts"
+  },
+  "keywords": [
+    "solana",
+    "oobe-protocol",
+    "synapse-sap",
+    "steve-capital",
+    "multihopper",
+    "mcp",
+    "solana-actions",
+    "blinks",
+    "x402",
+    "autonomous-agent"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@oobe-protocol-labs/synapse-sap-sdk": "1.0.3",
+    "@solana/spl-token": "^0.4.14",
+    "@solana/web3.js": "^1.98.4",
+    "bn.js": "^5.2.3",
+    "bs58": "^5.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.6",
+    "@types/node": "^20.17.10",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "author": "GS",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sonnyman2014/sentinel-sap-autonomous-capital-agent.git"
+  }
+}
