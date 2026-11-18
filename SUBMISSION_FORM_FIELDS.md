@@ -46,7 +46,7 @@ https://github.com/sonnyman2014/sentinel-sap-autonomous-capital-agent
 Built Sentinel-SAP for the @SteveCapitalOS Autonomous Capital Agent Challenge powered by @OOBEonSol!
 
 - Native OOBE SAP v2 SDK PDAs (SAPpUhsW...) + Ed25519 Capital Mandates & Sub-Agent VaultDelegates
-- 10-Layer SPL & Token-2022 Pre-Trade Rug Shield + Empty-ATA Rent Compounding
+- 11-Layer SPL & Token-2022 Pre-Trade Rug Shield + Empty-ATA Rent Compounding
 - @Multihopper MCP & MH_018 Multi-Destination Treasury Routing + @acedatacloud Conviction Engine
 - Solana Actions v2.2.1 Blink + x402 MCP Server
 
@@ -70,7 +70,7 @@ Deterministic OOBE Protocol SAP v2 (Program: SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7A
 - Specialist Routing Sub-Agent VaultDelegate PDA: 3NPfM4oxrkiUKxC2hPztCdWMmQzYh8wkMM4ofhVLzKTc
 
 Live Solana Actions v2.2.1 Blink & x402 MCP Gateway Reference Deployment:
-https://rentandrugshield.com (10-Layer Pre-Buy Shield + Empty-ATA Rent Reclaim + x402 MCP Server)
+https://rentandrugshield.com (11-Layer Pre-Buy Shield + Empty-ATA Rent Reclaim + x402 MCP Server)
 ```
 
 ### Field D - Anything Else / Technical Deep-Dive & Track Qualification Summary
@@ -79,10 +79,10 @@ Sentinel-SAP (@sentinel-sap/autonomous-capital-agent) is a complete, production-
 
 1. OOBE Protocol SAP v2 (@oobe-protocol-labs/synapse-sap-sdk v1.0.3) Integration:
    - Derives deterministic on-chain AgentAccount, MemoryVault, AgentStats, PricingMenu, AgentStake, VaultDelegate, Tool (6 tools), CapabilityIndex, ProtocolIndex, and v0.10.0 anti-replay SettlementReceipt PDAs against mainnet program SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7AyhGpFETZ.
-   - Programmable CapitalMandateEngine enforces per-tx USD caps, rolling 24h spend ceilings, minimum 80/100 10-Layer Shield conviction scores, liquidity floors (>= $25k), slippage bounds (<= 100 bps), sub-agent VaultDelegate budgets/expiries, Ed25519 mandate attestations, and strict anti-circular transfer / wash-volume prevention.
+   - Programmable CapitalMandateEngine enforces per-tx USD caps, rolling 24h spend ceilings, minimum 80/100 11-Layer Shield conviction scores, liquidity floors (>= $25k), slippage bounds (<= 100 bps), sub-agent VaultDelegate budgets/expiries, Ed25519 mandate attestations, and strict anti-circular transfer / wash-volume prevention.
 
-2. 10-Layer SPL & Token-2022 Pre-Trade Risk Shield + Empty-ATA Rent Compounding:
-   - Inspects live Solana mainnet mints and DEX pools across 10 layers (Mint/Freeze authorities, Token-2022 PermanentDelegate / NonTransferable / excessive TransferFeeConfig traps, Top-10 concentration, pool depth, organic volume, honeypot sell-ratio, and price impact) BEFORE allowing any Jupiter v6 swap.
+2. 11-Layer SPL & Token-2022 Pre-Trade Risk Shield + Empty-ATA Rent Compounding:
+   - Inspects live Solana mainnet mints and DEX pools across 11 layers (Mint/Freeze authorities, Token-2022 PermanentDelegate / NonTransferable / excessive TransferFeeConfig traps, Top-10 concentration, pool depth, organic volume, honeypot sell-ratio, and price impact) BEFORE allowing any Jupiter v6 swap.
    - Scans SPL & Token-2022 token accounts for zero-balance ATAs (~0.00203928 SOL each), automatically skipping frozen accounts and withheld-fee accounts so batch CloseAccount VersionedTransactions never revert, compounding idle rent SOL back into the agent vault.
 
 3. MultiHopper Agent Routing Side-Track Integration (MCP + OpenAPI v1):

@@ -51,7 +51,7 @@ async function main(): Promise<void> {
       "Sentinel-SAP CLI (@sentinel-sap/autonomous-capital-agent)",
       "Commands:",
       "  sap-identity [wallet]   Derive OOBE SAP v2 PDAs & inspect Solana mainnet state",
-      "  audit-mint [mint]       Run 10-Layer SPL/Token-2022 pre-trade risk audit",
+      "  audit-mint [mint]       Run 11-Layer SPL/Token-2022 pre-trade risk audit",
       "  scan-rent [wallet]      Scan mainnet empty ATAs & build CloseAccount VersionedTx",
       "  mcp-stdio               Launch JSON-RPC 2.0 MCP server over stdio",
       "  serve [port]            Launch Solana Actions v2.2.1 Blink + HTTP MCP server",

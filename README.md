@@ -1,6 +1,6 @@
 # Sentinel-SAP (`@sentinel-sap/autonomous-capital-agent`)
 
-**Autonomous Solana Capital & Treasury Routing Agent built on OOBE Protocol SAP v2 (`@oobe-protocol-labs/synapse-sap-sdk`), MultiHopper Programmable Routing MCP/API, 10-Layer SPL/Token-2022 Pre-Trade Guardrails, Empty-ATA Rent Compounding, Solana Actions v2.2.1 Blinks, and x402 MCP Agentic Commerce.**
+**Autonomous Solana Capital & Treasury Routing Agent built on OOBE Protocol SAP v2 (`@oobe-protocol-labs/synapse-sap-sdk`), MultiHopper Programmable Routing MCP/API, 11-Layer SPL/Token-2022 Pre-Trade Guardrails, Empty-ATA Rent Compounding, Solana Actions v2.2.1 Blinks, and x402 MCP Agentic Commerce.**
 
 > **Superteam Earn Target Bounty:** [Build an Autonomous Capital Agent on Solana & Compete for $500 in Rewards](https://earn.superteam.fun/listing/build-an-autonomous-capital-agent-on-solana-and-compete-for-dollar500-in-rewards)  
 > **Sponsor:** OOBE Protocol (`Steve Capital`), featuring **MultiHopper** (`Agent Routing Challenge`) & **Ace Data Cloud** (`MCP Conviction`)  
@@ -17,7 +17,7 @@ Autonomous capital agents on Solana routinely lose principal to three preventabl
 
 **Sentinel-SAP** solves all three in a unified, zero-placeholder TypeScript SDK, JSON-RPC 2.0 Model Context Protocol (MCP) Server, and Solana Actions v2.2.1 Blink:
 - **Native OOBE Protocol SAP v2 Identity & Guardrails (`src/sap-agent.ts`, `src/mandate.ts`):** Derives deterministic on-chain SAP v2 accounts (`AgentAccount`, `MemoryVault`, `VaultDelegate`, `AgentStats`, `PricingMenu`, `AgentStake`, `Tool`, and v0.10.0 anti-replay `SettlementReceipt` PDAs) against mainnet program `SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7AyhGpFETZ` and enforces Ed25519-attested spending caps, rolling 24h budgets, sub-agent delegation bounds, and anti-circular transfer rules.
-- **10-Layer SPL & Token-2022 Pre-Trade Risk Shield (`src/shield-and-rent.ts`):** Inspects live Solana mainnet mints and DEX pools before allowing any Jupiter swap.
+- **11-Layer SPL & Token-2022 Pre-Trade Risk Shield (`src/shield-and-rent.ts`):** Inspects live Solana mainnet mints and DEX pools before allowing any Jupiter swap.
 - **Fault-Tolerant Empty-ATA Rent Compounding (`src/shield-and-rent.ts`):** Builds non-custodial `VersionedTransaction` (`MessageV0`) `CloseAccount` batches while automatically skipping frozen ATAs and withheld-fee Token-2022 accounts.
 - **MultiHopper Programmable Routing SDK & MCP Bridge (`src/multihopper.ts`):** Auto-discovers MultiHopper's live MCP Server Card (`v1.1.0`), validates `MH_018` custom routes (`2-10` hops, up to `20` multi-send destinations), computes `50 bps` fee / `25 bps` partner rev-share economics, and non-custodially signs `PreparedTxBundle` (`routeInitTxs` -> `dispersionInitTxs`) in strict order.
 - **Ace Data Cloud Conviction Engine + x402 MCP + Solana Actions v2.2.1 (`src/ace-conviction.ts`, `src/mcp-server.ts`, `src/http-server.ts`):** Exposes 7 MCP tools over `--stdio` and Streamable HTTP `/mcp` with open discovery (`HTTP 200`) and `HTTP 402` Solana payment gating, alongside CORS-compliant Solana Blinks.
@@ -33,7 +33,7 @@ flowchart TD
     MCP["Sentinel-SAP MCP Server (--stdio & POST /mcp + x402 Gate)"]
     Mandate["CapitalMandateEngine (Ed25519 Attestation + Anti-Circular + 24h Cap)"]
     SAP["OOBE Protocol SAP v2 SDK (SAPpUhsW... PDAs & Anti-Replay Receipts)"]
-    Shield["10-Layer SPL & Token-2022 Pre-Trade Shield + Empty-ATA Rent Reclaimer"]
+    Shield["11-Layer SPL & Token-2022 Pre-Trade Shield + Empty-ATA Rent Reclaimer"]
     MH["MultiHopper v1 SDK & MCP Client (MH_018 Validator + Bundle Signer)"]
     Ace["Ace Data Cloud MCP + DEX Conviction Synthesizer"]
     Solana["Solana Mainnet-Beta RPC + Jupiter v6 Quote Engine"]
@@ -81,19 +81,19 @@ npm test
 | Command | Description |
 | :--- | :--- |
 | `sap-identity [wallet]` | Derives OOBE SAP v2 PDAs (`AgentAccount`, `MemoryVault`, `VaultDelegate`, `Tool` x6) and queries live Solana mainnet `GlobalRegistry` & wallet state. |
-| `audit-mint [mint]` | Runs live 10-Layer SPL / Token-2022 risk audit on Solana mainnet + DexScreener liquidity telemetry. |
+| `audit-mint [mint]` | Runs live 11-Layer SPL / Token-2022 risk audit on Solana mainnet + DexScreener liquidity telemetry. |
 | `scan-rent [wallet]` | Scans live SPL & Token-2022 token accounts, skips frozen/withheld-fee ATAs, and outputs a base64 `CloseAccount` `VersionedTransaction`. |
 | `mcp-stdio` | Starts the JSON-RPC 2.0 MCP server (`protocolVersion: 2024-11-05`) over `stdin`/`stdout` for Steve Capital / Claude / Cursor MCP Workspace. |
 | `serve [port]` | Starts the Streamable HTTP MCP (`/mcp` + x402 gate) and Solana Actions v2.2.1 Blink server (`/api/actions/capital-agent`). |
 
 ### Exposed MCP Tools (`7` Tools)
 1. `sap_derive_agent_identity` - Deterministic OOBE SAP v2 PDA tree + optional live Solana mainnet RPC inspection.
-2. `shield_audit_token_mint` - 10-Layer SPL & Token-2022 pre-trade risk audit (`SAFE` / `CAUTION` / `BLOCKED`).
+2. `shield_audit_token_mint` - 11-Layer SPL & Token-2022 pre-trade risk audit (`SAFE` / `CAUTION` / `BLOCKED`).
 3. `reclaim_empty_atas_tx` - Zero-balance SPL/Token-2022 ATA discovery + `VersionedTransaction` builder.
 4. `mandate_evaluate_execution` - Programmable mandate evaluation + SAP v0.10.0 `SettlementReceipt` anti-replay PDA derivation.
 5. `multihopper_plan_and_quote` - Client-side `MH_018` route validation + `50 bps` / `25 bps` economics + MultiHopper MCP discovery.
-6. `jupiter_build_guarded_swap` - Pre-trade 10-Layer Shield + Mandate gate + live Jupiter swap quote (`https://lite-api.jup.ag/swap/v1/quote`).
-7. `ace_research_conviction_brief` - Blended on-chain 10-Layer Shield + Ace Data Cloud SERP conviction brief (`CORE_ALLOCATION` / `TACTICAL_SATELLITE` / `DO_NOT_ALLOCATE`).
+6. `jupiter_build_guarded_swap` - Pre-trade 11-Layer Shield + Mandate gate + live Jupiter swap quote (`https://lite-api.jup.ag/swap/v1/quote`).
+7. `ace_research_conviction_brief` - Blended on-chain 11-Layer Shield + Ace Data Cloud SERP conviction brief (`CORE_ALLOCATION` / `TACTICAL_SATELLITE` / `DO_NOT_ALLOCATE`).
 
 ### Solana Actions v2.2.1 & x402 HTTP Endpoints
 - `GET /.well-known/mcp/server-card.json` - MCP discovery card (`HTTP 200`).
@@ -123,7 +123,7 @@ npm test
 ok 1 - OOBE Protocol SAP v2 Identity & Programmable Capital Mandates (3/3 subtests)
 ok 2 - MCP JSON-RPC + x402 Gate + Solana Actions v2.2.1 Blink + Live Mainnet RPC (3/3 subtests)
 ok 3 - MultiHopper Programmable Routing SDK & Ace Data Cloud Conviction (3/3 subtests)
-ok 4 - 10-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding (3/3 subtests)
+ok 4 - 11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding (3/3 subtests)
 1..4
 # tests 12 | suites 4 | pass 12 | fail 0
 ```

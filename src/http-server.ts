@@ -110,7 +110,7 @@ export function createSentinelHttpServer(options: SentinelHttpServerOptions = {}
           icon: "https://earn.superteam.fun/favicon.ico",
           title: "Sentinel-SAP :: Autonomous Capital & Treasury Routing Agent",
           description:
-            `OOBE Protocol SAP v2 (${sapBundle.programId.slice(0, 8)}...) + MultiHopper Programmable Routing + 10-Layer Pre-Trade Shield + Empty-ATA Rent Compounding.`,
+            `OOBE Protocol SAP v2 (${sapBundle.programId.slice(0, 8)}...) + MultiHopper Programmable Routing + 11-Layer Pre-Trade Shield + Empty-ATA Rent Compounding.`,
           label: "Anchor Capital Mandate",
           links: {
             actions: [

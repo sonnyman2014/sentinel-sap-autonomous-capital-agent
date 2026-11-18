@@ -79,7 +79,7 @@ export const SENTINEL_MCP_TOOLS = [
   {
     name: "shield_audit_token_mint",
     description:
-      "Run a 10-Layer SPL & Token-2022 Pre-Trade Risk Audit against Solana mainnet-beta + DEX telemetry (Mint/Freeze authority, PermanentDelegate/TransferFee traps, Top-10 concentration, liquidity, honeypot sell ratio).",
+      "Run a 11-Layer SPL & Token-2022 Pre-Trade Risk Audit against Solana mainnet-beta + DEX telemetry (Mint/Freeze authority, PermanentDelegate/TransferFee traps, Top-10 concentration, liquidity, honeypot sell ratio).",
     inputSchema: {
       type: "object",
       properties: {
@@ -145,7 +145,7 @@ export const SENTINEL_MCP_TOOLS = [
   {
     name: "jupiter_build_guarded_swap",
     description:
-      "Audit target mint with 10-Layer Shield, verify Capital Mandate guardrails, and fetch a live slippage-bounded Jupiter v6 swap quote on Solana mainnet.",
+      "Audit target mint with 11-Layer Shield, verify Capital Mandate guardrails, and fetch a live slippage-bounded Jupiter v6 swap quote on Solana mainnet.",
     inputSchema: {
       type: "object",
       properties: {
@@ -163,7 +163,7 @@ export const SENTINEL_MCP_TOOLS = [
   {
     name: "ace_research_conviction_brief",
     description:
-      "Synthesize an auditable Steve Capital strategy conviction brief combining 10-Layer Solana on-chain risk scoring with Ace Data Cloud MCP research signals.",
+      "Synthesize an auditable Steve Capital strategy conviction brief combining 11-Layer Solana on-chain risk scoring with Ace Data Cloud MCP research signals.",
     inputSchema: {
       type: "object",
       properties: {
@@ -210,7 +210,7 @@ export class SentinelSapMcpServer {
       name: "Sentinel-SAP Autonomous Capital Agent",
       version: "1.0.0",
       description:
-        "Autonomous Solana Capital & Treasury Routing Agent powered by OOBE Protocol SAP v2, MultiHopper Programmable Routing, 10-Layer Pre-Trade Shield, Empty-ATA Rent Compounding, and x402 Guardrails.",
+        "Autonomous Solana Capital & Treasury Routing Agent powered by OOBE Protocol SAP v2, MultiHopper Programmable Routing, 11-Layer Pre-Trade Shield, Empty-ATA Rent Compounding, and x402 Guardrails.",
       transport: {
         type: "streamable-http",
         url: `${publicBaseUrl}/mcp`,

@@ -10,7 +10,7 @@ cd sentinel-sap-autonomous-capital-agent
 `./run_demo.sh` executes:
 1. `npm run typecheck` (`tsc --noEmit` -> `0` errors)
 2. `npm test` (`12/12` unit + live Solana Mainnet-Beta integration tests passing, `0` failures)
-3. `npm run demo` (`tsx scripts/demo_proof.ts` -> live Superteam Earn API check + live Solana Mainnet-Beta SAP v2 `SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7AyhGpFETZ` inspection + live Circle `$USDC` 10-Layer Audit + live Jupiter swap quote + live MultiHopper MCP discovery & non-custodial `VersionedTransaction` bundle signing + live Solana Actions v2.2.1 Blink execution)
+3. `npm run demo` (`tsx scripts/demo_proof.ts` -> live Superteam Earn API check + live Solana Mainnet-Beta SAP v2 `SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7AyhGpFETZ` inspection + live Circle `$USDC` 11-Layer Audit + live Jupiter swap quote + live MultiHopper MCP discovery & non-custodial `VersionedTransaction` bundle signing + live Solana Actions v2.2.1 Blink execution)
 
 ---
 
@@ -36,7 +36,7 @@ Timestamp (UTC): 2026-11-17T19:33:29.605Z
   Derived MemoryVault     : 47SHovNZn5CrThLTszFkWqdpNBHrppD4DzhJ176v9Stp (bump=255)
   Derived VaultDelegate   : 3NPfM4oxrkiUKxC2hPztCdWMmQzYh8wkMM4ofhVLzKTc
 
-[3/6] 10-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN
+[3/6] 11-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN
   Mainnet $USDC Verdict   : SAFE (100/100)
   Token-2022 Rug Trap     : BLOCKED (0/100 - blocked pre-swap)
   Mainnet ATA Scan        : reclaimable=0, frozenSkipped=0 (safe skip prevents CloseAccount revert)

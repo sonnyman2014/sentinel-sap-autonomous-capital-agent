@@ -141,7 +141,7 @@ describe("MultiHopper Programmable Routing SDK & Ace Data Cloud Conviction", () 
     assert.ok(calls[0].startsWith("https://devnet.multihopper.com/api/v1/transfers"));
   });
 
-  it("synthesizes Ace Data Cloud MCP + 10-Layer Shield conviction briefs", async () => {
+  it("synthesizes Ace Data Cloud MCP + 11-Layer Shield conviction briefs", async () => {
     const usdc = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
     const shield = evaluate10LayerShield(usdc, {
       programOwner: TOKEN_PROGRAM_ID.toBase58(),

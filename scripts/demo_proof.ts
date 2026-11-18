@@ -72,7 +72,7 @@ async function runLiveDemoProof(): Promise<void> {
   console.log(`  Derived MemoryVault     : ${sapBundle.memoryVaultPda} (bump=${sapBundle.memoryVaultBump})`);
   console.log(`  Derived VaultDelegate   : ${sapBundle.subAgentDelegatePda}\n`);
 
-  // 3. Live 10-Layer Pre-Trade Shield + Empty-ATA Mainnet Scan
+  // 3. Live 11-Layer Pre-Trade Shield + Empty-ATA Mainnet Scan
   const usdcAudit = await auditTokenMintLive("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
   const rugSimulation = evaluate10LayerShield(Keypair.generate().publicKey.toBase58(), {
     programOwner: TOKEN_2022_PROGRAM_ID.toBase58(),
@@ -90,7 +90,7 @@ async function runLiveDemoProof(): Promise<void> {
     sells24h: 0,
   });
   const rentScan = await scanMainnetEmptyAtas(DEFAULT_TREASURY_WALLET);
-  console.log("[3/6] 10-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN");
+  console.log("[3/6] 11-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN");
   console.log(`  Mainnet $USDC Verdict   : ${usdcAudit.verdict} (${usdcAudit.convictionScore}/100)`);
   console.log(`  Token-2022 Rug Trap     : ${rugSimulation.verdict} (${rugSimulation.convictionScore}/100 - blocked pre-swap)`);
   console.log(

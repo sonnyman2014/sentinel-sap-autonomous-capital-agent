@@ -10,7 +10,7 @@ import {
   STANDARD_ATA_RENT_LAMPORTS,
 } from "../src/shield-and-rent.js";
 
-describe("10-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", () => {
+describe("11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", () => {
   it("scores clean revoked SPL tokens SAFE and blocks Token-2022 PermanentDelegate & Honeypots", () => {
     const cleanMint = Keypair.generate().publicKey.toBase58();
     const safeReport = evaluate10LayerShield(cleanMint, {
@@ -29,6 +29,8 @@ describe("10-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", (
     });
     assert.equal(safeReport.convictionScore, 100);
     assert.equal(safeReport.verdict, "SAFE");
+    assert.equal(safeReport.layers.length, 11);
+    assert.equal(safeReport.layers[10]?.layer, 11);
 
     const trapMint = Keypair.generate().publicKey.toBase58();
     const trapReport = evaluate10LayerShield(trapMint, {

@@ -1,6 +1,6 @@
 # Sentinel-SAP ($500 USDC Superteam Earn Submission Ready Bundle)
 
-- Author: GS
+- Author: Solana Rent & Rug Shield Engineering
 - Target Bounty: Build an Autonomous Capital Agent on Solana & Compete for $500 in Rewards
 - Listing URL: https://earn.superteam.fun/listing/build-an-autonomous-capital-agent-on-solana-and-compete-for-dollar500-in-rewards
 - Listing UUID: 591423c3-bb3e-4f91-8ff0-69f163038ede
@@ -23,7 +23,7 @@ https://github.com/sonnyman2014/sentinel-sap-autonomous-capital-agent
 Built Sentinel-SAP for the @SteveCapitalOS Autonomous Capital Agent Challenge powered by @OOBEonSol!
 
 - Native OOBE SAP v2 SDK PDAs (SAPpUhsW...) + Ed25519 Capital Mandates & Sub-Agent VaultDelegates
-- 10-Layer SPL & Token-2022 Pre-Trade Rug Shield + Empty-ATA Rent Compounding
+- 11-Layer SPL & Token-2022 Pre-Trade Rug Shield + Empty-ATA Rent Compounding
 - @Multihopper MCP & MH_018 Multi-Destination Treasury Routing + @acedatacloud Conviction Engine
 - Solana Actions v2.2.1 Blink + x402 MCP Server
 
@@ -54,18 +54,18 @@ Sentinel-SAP (@sentinel-sap/autonomous-capital-agent) is a TypeScript SDK, JSON-
 
 1. OOBE Protocol SAP v2 (@oobe-protocol-labs/synapse-sap-sdk v1.0.3):
    - Derives deterministic AgentAccount, MemoryVault, AgentStats, PricingMenu, AgentStake, VaultDelegate, Tool, CapabilityIndex, ProtocolIndex, and v0.10.0 anti-replay SettlementReceipt PDAs against mainnet program SAPpUhsWLJG1FfkGRcXagEDMrMsWGjbky7AyhGpFETZ.
-   - CapitalMandateEngine enforces per-tx USD caps, rolling 24h spend limits, >=80/100 10-Layer Shield score gates, >=$25k liquidity floors, <=100 bps slippage caps, sub-agent VaultDelegate scopes, Ed25519 mandate attestations, and anti-circular transfer checks.
+   - CapitalMandateEngine enforces per-tx USD caps, rolling 24h spend limits, >=80/100 11-Layer Shield score gates, >=$25k liquidity floors, <=100 bps slippage caps, sub-agent VaultDelegate scopes, Ed25519 mandate attestations, and anti-circular transfer checks.
 
-2. 10-Layer SPL & Token-2022 Pre-Trade Shield + Empty-ATA Rent Compounding:
-   - Audits mints and pools across 10 layers (Mint/Freeze authorities, Token-2022 PermanentDelegate, NonTransferable, TransferFeeConfig traps, Top-10 holder concentration, liquidity depth, volume, sell ratio, and price impact) prior to Jupiter quote execution.
+2. 11-Layer SPL & Token-2022 Pre-Trade Shield + Empty-ATA Rent Compounding:
+   - Audits mints and pools across 11 layers (Mint/Freeze authorities, Token-2022 PermanentDelegate, NonTransferable, TransferFeeConfig traps, Top-10 holder concentration, liquidity depth, volume, sell ratio, and price impact) prior to Jupiter quote execution.
    - Reclaims zero-balance SPL and Token-2022 ATAs (~0.00203928 SOL each) in non-custodial VersionedTransaction batches while skipping frozen or withheld-fee accounts.
 
 3. MultiHopper Agent Routing Side-Track + Ace Data Cloud MCP Side-Track:
    - Discovers https://www.multihopper.com/.well-known/mcp/server-card.json, enforces MH_018 route invariants (2 to 10 hops, up to 20 multi-send recipients, exact BigInt share sums, 20s to 30d wait windows), computes 50 bps fee / 25 bps partner revenue share, and signs PreparedTxBundle VersionedTransactions in order.
-   - Synthesizes on-chain 10-Layer Shield telemetry with Ace Data Cloud research signals via 7 MCP tools over --stdio and POST /mcp (HTTP 200 discovery + HTTP 402 Solana payment gate to 89Sv5FvnMNRid1bn8y2Ti1vJPSxWxgiW9GSLsPpBnKK1).
+   - Synthesizes on-chain 11-Layer Shield telemetry with Ace Data Cloud research signals via 7 MCP tools over --stdio and POST /mcp (HTTP 200 discovery + HTTP 402 Solana payment gate to 89Sv5FvnMNRid1bn8y2Ti1vJPSxWxgiW9GSLsPpBnKK1).
 
 Thank you!
-- GS
+- Solana Rent & Rug Shield Engineering
 ```
 
 ---
@@ -110,8 +110,8 @@ ok 1 - OOBE Protocol SAP v2 Identity & Programmable Capital Mandates
       ---
       duration_ms: 78.1713
       ...
-    # Subtest: verifies live Solana Mainnet-Beta SAP v2 state, USDC 10-Layer Audit, and MultiHopper MCP card
-    ok 3 - verifies live Solana Mainnet-Beta SAP v2 state, USDC 10-Layer Audit, and MultiHopper MCP card
+    # Subtest: verifies live Solana Mainnet-Beta SAP v2 state, USDC 11-Layer Audit, and MultiHopper MCP card
+    ok 3 - verifies live Solana Mainnet-Beta SAP v2 state, USDC 11-Layer Audit, and MultiHopper MCP card
       ---
       duration_ms: 819.6833
       ...
@@ -132,8 +132,8 @@ ok 2 - MCP JSON-RPC + x402 Gate + Solana Actions v2.2.1 Blink + Live Mainnet RPC
       ---
       duration_ms: 85.6722
       ...
-    # Subtest: synthesizes Ace Data Cloud MCP + 10-Layer Shield conviction briefs
-    ok 3 - synthesizes Ace Data Cloud MCP + 10-Layer Shield conviction briefs
+    # Subtest: synthesizes Ace Data Cloud MCP + 11-Layer Shield conviction briefs
+    ok 3 - synthesizes Ace Data Cloud MCP + 11-Layer Shield conviction briefs
       ---
       duration_ms: 33.1927
       ...
@@ -143,7 +143,7 @@ ok 3 - MultiHopper Programmable Routing SDK & Ace Data Cloud Conviction
   duration_ms: 239.6962
   type: 'suite'
   ...
-# Subtest: 10-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding
+# Subtest: 11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding
     # Subtest: scores clean revoked SPL tokens SAFE and blocks Token-2022 PermanentDelegate & Honeypots
     ok 1 - scores clean revoked SPL tokens SAFE and blocks Token-2022 PermanentDelegate & Honeypots
       ---
@@ -160,7 +160,7 @@ ok 3 - MultiHopper Programmable Routing SDK & Ace Data Cloud Conviction
       duration_ms: 37.8472
       ...
     1..3
-ok 4 - 10-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding
+ok 4 - 11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding
   ---
   duration_ms: 236.1862
   type: 'suite'
@@ -203,7 +203,7 @@ Timestamp (UTC): 2026-11-18T01:00:18.214Z
   Derived MemoryVault     : 47SHovNZn5CrThLTszFkWqdpNBHrppD4DzhJ176v9Stp (bump=255)
   Derived VaultDelegate   : 3NPfM4oxrkiUKxC2hPztCdWMmQzYh8wkMM4ofhVLzKTc
 
-[3/6] 10-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN
+[3/6] 11-LAYER SPL/TOKEN-2022 SHIELD & MAINNET ATA RENT SCAN
   Mainnet $USDC Verdict   : SAFE (100/100)
   Token-2022 Rug Trap     : BLOCKED (0/100 - blocked pre-swap)
   Mainnet ATA Scan        : reclaimable=0, frozenSkipped=0 (safe skip prevents CloseAccount revert)

@@ -66,9 +66,10 @@ export interface ParsedMintInspectionInput {
   buys24h: number;
   sells24h: number;
   priceImpactPct?: number;
+  sybilClusterPct?: number;
 }
 
-export function evaluate10LayerShield(
+export function evaluate11LayerShield(
   mint: string,
   input: ParsedMintInspectionInput
 ): TokenShieldAuditReport {
@@ -231,6 +232,22 @@ export function evaluate10LayerShield(
     detail: `Estimated route price impact=${impact.toFixed(3)}% (ceiling <= 5.0%)`,
   });
 
+  // Layer 11: Block-0 Sybil Cluster & Spoofed Wash-Liquidity Guard
+  const sybilPct = input.sybilClusterPct ?? 0;
+  const washTurnover =
+    input.poolLiquidityUsd > 0 ? input.volume24hUsd / input.poolLiquidityUsd : 0;
+  const spoofedLp =
+    !isCanonical && input.poolLiquidityUsd < 15_000 && washTurnover > 40.0;
+  const l11Pass = isCanonical || (sybilPct <= 20.0 && !spoofedLp);
+  if (!l11Pass) score -= 30;
+  layers.push({
+    layer: 11,
+    name: "Block-0 Sybil Cluster & Spoofed LP Guard",
+    passed: l11Pass,
+    scoreDelta: l11Pass ? 0 : -30,
+    detail: `Block-0 Sybil cluster=${sybilPct.toFixed(1)}% (<= 20%), LP turnover=${washTurnover.toFixed(1)}x`,
+  });
+
   const convictionScore = Math.max(0, Math.min(100, score));
   const verdict =
     convictionScore >= 80 ? "SAFE" : convictionScore >= 55 ? "CAUTION" : "BLOCKED";
@@ -333,7 +350,7 @@ export async function auditTokenMintLive(
     // Fallback to canonical baseline if offline
   }
 
-  return evaluate10LayerShield(mintPk.toBase58(), {
+  return evaluate11LayerShield(mintPk.toBase58(), {
     programOwner,
     decimals,
     supplyUi,
@@ -652,3 +669,5 @@ export async function quoteGuardedJupiterSwap(params: {
     },
   };
 }
+
+export const evaluate10LayerShield = evaluate11LayerShield;

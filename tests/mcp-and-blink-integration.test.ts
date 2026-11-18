@@ -153,7 +153,7 @@ describe("MCP JSON-RPC + x402 Gate + Solana Actions v2.2.1 Blink + Live Mainnet 
     assert.equal(replayPaid.status, 402);
   });
 
-  it("verifies live Solana Mainnet-Beta SAP v2 state, USDC 10-Layer Audit, and MultiHopper MCP card", async () => {
+  it("verifies live Solana Mainnet-Beta SAP v2 state, USDC 11-Layer Audit, and MultiHopper MCP card", async () => {
     const [sapSnap, usdcAudit, mhCard] = await Promise.all([
       inspectSapMainnetState(DEFAULT_TREASURY_WALLET),
       auditTokenMintLive("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"),
