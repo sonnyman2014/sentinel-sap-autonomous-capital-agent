@@ -1,7 +1,7 @@
 {
   "name": "@sentinel-sap/autonomous-capital-agent",
   "version": "1.0.0",
-  "description": "Sentinel-SAP: Autonomous Solana Capital & Treasury Routing Agent built on OOBE Protocol SAP v2 (@oobe-protocol-labs/synapse-sap-sdk), MultiHopper Programmable Routing MCP/API, Solana Actions v2.2.1 Blinks, and 11-Layer Pre-Trade SPL/Token-2022 Risk & Rent-Reclaim Guardrails.",
+  "description": "Sentinel-SAP: Autonomous Solana Capital & Treasury Routing Agent built on OOBE Protocol SAP v2 (@oobe-protocol-labs/synapse-sap-sdk), MultiHopper Programmable Routing MCP/API, Solana Actions v2.2.1 Blinks, and 12-Layer Pre-Trade SPL/Token-2022 Risk & Rent-Reclaim Guardrails.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

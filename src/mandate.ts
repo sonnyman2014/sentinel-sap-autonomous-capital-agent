@@ -67,11 +67,30 @@ export interface MandateEvaluation {
 export interface SpendRecord {
   intentId: string;
   amountUsd: number;
+  amountMicroUsd: bigint;
   timestampUnix: number;
   serviceHashHex: string;
 }
 
 export const DEFAULT_TREASURY_WALLET = "89Sv5FvnMNRid1bn8y2Ti1vJPSxWxgiW9GSLsPpBnKK1";
+export const MICRO_USD_PER_USD = 1_000_000n;
+export const MAX_BPS_CEILING = 10_000;
+
+export function usdToMicroUsdBigInt(usd: number): bigint {
+  if (!Number.isFinite(usd)) {
+    throw new Error(`USD amount must be finite, got ${String(usd)}`);
+  }
+  return BigInt(Math.round(usd * 1_000_000));
+}
+
+export function microUsdBigIntToUsd(microUsd: bigint): number {
+  const negative = microUsd < 0n;
+  const abs = negative ? -microUsd : microUsd;
+  const whole = abs / MICRO_USD_PER_USD;
+  const frac = (abs % MICRO_USD_PER_USD).toString().padStart(6, "0");
+  const parsed = Number(`${negative ? "-" : ""}${whole.toString()}.${frac}`);
+  return Object.is(parsed, -0) ? 0 : parsed;
+}
 
 export function createDefaultMandate(
   agentWallet: string = DEFAULT_TREASURY_WALLET,
@@ -105,13 +124,40 @@ export function createDefaultMandate(
 
 export class CapitalMandateEngine {
   private readonly mandate: CapitalMandate;
+  private readonly maxSingleTxMicroUsd: bigint;
+  private readonly maxDailySpendMicroUsd: bigint;
   private readonly spendLedger: SpendRecord[] = [];
   private readonly delegations = new Map<string, SubAgentDelegationPolicy>();
 
   constructor(mandate: CapitalMandate) {
     new PublicKey(mandate.agentWallet);
     new PublicKey(mandate.treasuryWallet);
+    if (!Number.isFinite(mandate.maxSingleTxUsd) || mandate.maxSingleTxUsd <= 0) {
+      throw new Error("Mandate maxSingleTxUsd must be a positive finite number");
+    }
+    if (!Number.isFinite(mandate.maxDailySpendUsd) || mandate.maxDailySpendUsd <= 0) {
+      throw new Error("Mandate maxDailySpendUsd must be a positive finite number");
+    }
+    if (
+      !Number.isFinite(mandate.minConvictionScore) ||
+      mandate.minConvictionScore < 0 ||
+      mandate.minConvictionScore > 100
+    ) {
+      throw new Error("Mandate minConvictionScore must be within [0, 100]");
+    }
+    if (
+      !Number.isFinite(mandate.maxSlippageBps) ||
+      mandate.maxSlippageBps < 0 ||
+      mandate.maxSlippageBps > MAX_BPS_CEILING
+    ) {
+      throw new Error("Mandate maxSlippageBps must be within [0, 10000]");
+    }
+    if (!Number.isFinite(mandate.minLiquidityUsd) || mandate.minLiquidityUsd < 0) {
+      throw new Error("Mandate minLiquidityUsd must be a non-negative finite number");
+    }
     this.mandate = mandate;
+    this.maxSingleTxMicroUsd = usdToMicroUsdBigInt(mandate.maxSingleTxUsd);
+    this.maxDailySpendMicroUsd = usdToMicroUsdBigInt(mandate.maxDailySpendUsd);
   }
 
   getMandate(): CapitalMandate {
@@ -124,27 +170,48 @@ export class CapitalMandateEngine {
     if (policy.delegateWallet === this.mandate.agentWallet) {
       throw new Error("Sub-agent delegate wallet must be distinct from root agent wallet");
     }
+    if (!Number.isFinite(policy.issuedAtUnix) || !Number.isFinite(policy.expiresAtUnix)) {
+      throw new Error("Delegation timestamps must be finite Unix epoch seconds");
+    }
     const duration = policy.expiresAtUnix - policy.issuedAtUnix;
     if (duration <= 0 || duration > MAX_DELEGATE_DURATION_SECS) {
       throw new Error(
         `Delegation duration (${duration}s) must be within (0, ${MAX_DELEGATE_DURATION_SECS}] seconds`
       );
     }
-    if (policy.maxDelegatedUsd <= 0 || policy.maxDelegatedUsd > this.mandate.maxDailySpendUsd) {
+    if (
+      !Number.isFinite(policy.maxDelegatedUsd) ||
+      policy.maxDelegatedUsd <= 0 ||
+      usdToMicroUsdBigInt(policy.maxDelegatedUsd) > this.maxDailySpendMicroUsd
+    ) {
       throw new Error("Sub-agent delegated budget must be positive and within root daily spend cap");
     }
     this.delegations.set(policy.delegateWallet, { ...policy });
     return policy;
   }
 
-  getRolling24hSpendUsd(nowUnix: number = Math.floor(Date.now() / 1000)): number {
+  private getRolling24hSpendMicroUsd(nowUnix: number): bigint {
     const cutoff = nowUnix - 86_400;
-    return this.spendLedger
-      .filter((r) => r.timestampUnix >= cutoff)
-      .reduce((acc, r) => acc + r.amountUsd, 0);
+    let total = 0n;
+    for (const r of this.spendLedger) {
+      if (r.timestampUnix >= cutoff) {
+        total += r.amountMicroUsd;
+      }
+    }
+    return total;
+  }
+
+  getRolling24hSpendUsd(nowUnix: number = Math.floor(Date.now() / 1000)): number {
+    if (!Number.isFinite(nowUnix)) {
+      throw new Error("nowUnix must be a finite Unix timestamp");
+    }
+    return microUsdBigIntToUsd(this.getRolling24hSpendMicroUsd(nowUnix));
   }
 
   computeServiceHash(intent: ExecutionIntent): Uint8Array {
+    const canonicalAmount = Number.isFinite(intent.amountUsd)
+      ? microUsdBigIntToUsd(usdToMicroUsdBigInt(intent.amountUsd))
+      : `NON_FINITE:${String(intent.amountUsd)}`;
     const canonical = JSON.stringify({
       mandateId: this.mandate.mandateId,
       intentId: intent.intentId,
@@ -153,14 +220,20 @@ export class CapitalMandateEngine {
       recipientWallet: intent.recipientWallet ?? null,
       destinationWallets: intent.destinationWallets ?? [],
       tokenMint: intent.tokenMint,
-      amountUsd: Number(intent.amountUsd.toFixed(6)),
+      amountUsd: canonicalAmount,
     });
     return new Uint8Array(crypto.createHash("sha256").update(canonical).digest());
   }
 
   evaluate(intent: ExecutionIntent, commitSpend: boolean = false): MandateEvaluation {
     const reasons: string[] = [];
-    const nowUnix = intent.timestampUnix ?? Math.floor(Date.now() / 1000);
+    const fallbackNow = Math.floor(Date.now() / 1000);
+    const rawNow = intent.timestampUnix ?? fallbackNow;
+    const validTimestamp = Number.isFinite(rawNow) && rawNow > 0;
+    const nowUnix = validTimestamp ? Math.floor(rawNow) : fallbackNow;
+    if (!validTimestamp) {
+      reasons.push("INVALID_TIMESTAMP_UNIX");
+    }
 
     try {
       new PublicKey(intent.actorWallet);
@@ -180,6 +253,17 @@ export class CapitalMandateEngine {
       reasons.push(`TOKEN_MINT_DENIED:${intent.tokenMint}`);
     }
 
+    const amountFinite = Number.isFinite(intent.amountUsd);
+    let intentMicroUsd = 0n;
+    if (!amountFinite) {
+      reasons.push("NON_FINITE_AMOUNT_USD");
+    } else if (intent.amountUsd < 0) {
+      reasons.push("NEGATIVE_AMOUNT_USD");
+      intentMicroUsd = usdToMicroUsdBigInt(intent.amountUsd);
+    } else {
+      intentMicroUsd = usdToMicroUsdBigInt(intent.amountUsd);
+    }
+
     // Check actor authority (root agent or active sub-agent delegate)
     if (intent.actorWallet !== this.mandate.agentWallet) {
       const del = this.delegations.get(intent.actorWallet);
@@ -192,7 +276,7 @@ export class CapitalMandateEngine {
         if (!del.allowedProtocols.includes(intent.protocol)) {
           reasons.push(`SUB_AGENT_PROTOCOL_FORBIDDEN:${intent.protocol}`);
         }
-        if (intent.amountUsd > del.maxDelegatedUsd) {
+        if (amountFinite && intentMicroUsd > usdToMicroUsdBigInt(del.maxDelegatedUsd)) {
           reasons.push(
             `SUB_AGENT_CAP_EXCEEDED:${intent.amountUsd.toFixed(2)}>${del.maxDelegatedUsd.toFixed(2)}`
           );
@@ -200,47 +284,51 @@ export class CapitalMandateEngine {
       }
     }
 
-    if (intent.amountUsd < 0) {
-      reasons.push("NEGATIVE_AMOUNT_USD");
-    }
-
-    if (intent.amountUsd > this.mandate.maxSingleTxUsd) {
+    if (amountFinite && intentMicroUsd > this.maxSingleTxMicroUsd) {
       reasons.push(
         `SINGLE_TX_LIMIT_EXCEEDED:${intent.amountUsd.toFixed(2)}>${this.mandate.maxSingleTxUsd.toFixed(2)}`
       );
     }
 
-    const spent24h = this.getRolling24hSpendUsd(nowUnix);
-    if (spent24h + intent.amountUsd > this.mandate.maxDailySpendUsd) {
+    const spent24hMicro = this.getRolling24hSpendMicroUsd(nowUnix);
+    if (amountFinite && intentMicroUsd >= 0n && spent24hMicro + intentMicroUsd > this.maxDailySpendMicroUsd) {
+      const projectedUsd = microUsdBigIntToUsd(spent24hMicro + intentMicroUsd);
       reasons.push(
-        `DAILY_SPEND_CAP_EXCEEDED:${(spent24h + intent.amountUsd).toFixed(2)}>${this.mandate.maxDailySpendUsd.toFixed(2)}`
+        `DAILY_SPEND_CAP_EXCEEDED:${projectedUsd.toFixed(2)}>${this.mandate.maxDailySpendUsd.toFixed(2)}`
       );
     }
 
-    if (
-      intent.slippageBps !== undefined &&
-      intent.slippageBps > this.mandate.maxSlippageBps
-    ) {
-      reasons.push(`SLIPPAGE_TOO_HIGH:${intent.slippageBps}>${this.mandate.maxSlippageBps}bps`);
+    if (intent.slippageBps !== undefined) {
+      if (
+        !Number.isFinite(intent.slippageBps) ||
+        intent.slippageBps < 0 ||
+        intent.slippageBps > MAX_BPS_CEILING
+      ) {
+        reasons.push(`INVALID_SLIPPAGE_BPS:${String(intent.slippageBps)}`);
+      } else if (intent.slippageBps > this.mandate.maxSlippageBps) {
+        reasons.push(`SLIPPAGE_TOO_HIGH:${intent.slippageBps}>${this.mandate.maxSlippageBps}bps`);
+      }
     }
 
     // Enforce conviction & liquidity guardrails for swaps/trades
     if (intent.protocol !== "spl-rent-reclaim") {
-      if (
-        intent.convictionScore !== undefined &&
-        intent.convictionScore < this.mandate.minConvictionScore
-      ) {
-        reasons.push(
-          `CONVICTION_BELOW_FLOOR:${intent.convictionScore}<${this.mandate.minConvictionScore}`
-        );
+      if (intent.convictionScore !== undefined) {
+        if (!Number.isFinite(intent.convictionScore) || intent.convictionScore < 0) {
+          reasons.push(`INVALID_CONVICTION_SCORE:${String(intent.convictionScore)}`);
+        } else if (intent.convictionScore < this.mandate.minConvictionScore) {
+          reasons.push(
+            `CONVICTION_BELOW_FLOOR:${intent.convictionScore}<${this.mandate.minConvictionScore}`
+          );
+        }
       }
-      if (
-        intent.poolLiquidityUsd !== undefined &&
-        intent.poolLiquidityUsd < this.mandate.minLiquidityUsd
-      ) {
-        reasons.push(
-          `LIQUIDITY_BELOW_FLOOR:${intent.poolLiquidityUsd}<${this.mandate.minLiquidityUsd}`
-        );
+      if (intent.poolLiquidityUsd !== undefined) {
+        if (!Number.isFinite(intent.poolLiquidityUsd) || intent.poolLiquidityUsd < 0) {
+          reasons.push(`INVALID_POOL_LIQUIDITY_USD:${String(intent.poolLiquidityUsd)}`);
+        } else if (intent.poolLiquidityUsd < this.mandate.minLiquidityUsd) {
+          reasons.push(
+            `LIQUIDITY_BELOW_FLOOR:${intent.poolLiquidityUsd}<${this.mandate.minLiquidityUsd}`
+          );
+        }
       }
     }
 
@@ -275,23 +363,29 @@ export class CapitalMandateEngine {
     }
 
     const allowed = reasons.length === 0;
-    let postSpend24h = spent24h;
-    if (allowed && commitSpend && intent.amountUsd > 0) {
+    let postSpend24hMicro = spent24hMicro;
+    if (allowed && commitSpend && intentMicroUsd > 0n) {
       this.spendLedger.push({
         intentId: intent.intentId,
-        amountUsd: intent.amountUsd,
+        amountUsd: microUsdBigIntToUsd(intentMicroUsd),
+        amountMicroUsd: intentMicroUsd,
         timestampUnix: nowUnix,
         serviceHashHex,
       });
-      postSpend24h += intent.amountUsd;
+      postSpend24hMicro += intentMicroUsd;
     }
+
+    const remMicro =
+      this.maxDailySpendMicroUsd > postSpend24hMicro
+        ? this.maxDailySpendMicroUsd - postSpend24hMicro
+        : 0n;
 
     return {
       allowed,
       mandateId: this.mandate.mandateId,
       intentId: intent.intentId,
       reasons,
-      remainingDailyBudgetUsd: Math.max(0, Number((this.mandate.maxDailySpendUsd - postSpend24h).toFixed(6))),
+      remainingDailyBudgetUsd: microUsdBigIntToUsd(remMicro),
       serviceHashHex,
       serviceHashBytes,
       evaluatedAtIso: new Date(nowUnix * 1000).toISOString(),

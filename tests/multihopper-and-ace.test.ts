@@ -72,6 +72,22 @@ describe("MultiHopper Programmable Routing SDK & Ace Data Cloud Conviction", () 
       invalidMulti.errors.includes("MH_018_MULTI_DESTINATION_LAST_HOP_MUST_BE_EXPLICIT_WALLET")
     );
     assert.ok(invalidMulti.errors.some((e) => e.startsWith("MH_018_HOP_WAIT_OUT_OF_BOUNDS")));
+
+    // Defensive u64::MAX + fractional/NaN hop guards
+    const u64Overflow = validateMultiHopperRequest({
+      tokenMint: usdc,
+      amountRaw: "18446744073709551616", // u64::MAX + 1
+      amountTokens: "18446744073709.551616",
+      sourceOwner: sender,
+      recipientWallet: dest1,
+      hops: 3.5,
+    });
+    assert.equal(u64Overflow.valid, false);
+    assert.ok(u64Overflow.errors.includes("MH_AMOUNT_RAW_EXCEEDS_SPL_U64_MAX"));
+    assert.ok(u64Overflow.errors.some((e) => e.startsWith("MH_STANDARD_HOPS_OUT_OF_RANGE_3_TO_10")));
+    assert.throws(() =>
+      calculateRouteEconomics({ principalUsd: Number.NaN, hopCount: 3 })
+    );
   });
 
   it("computes exact 50 bps fee, 25 bps partner rev-share, and signs PreparedTxBundle in order", async () => {

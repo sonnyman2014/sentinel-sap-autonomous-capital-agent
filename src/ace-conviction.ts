@@ -65,7 +65,7 @@ export async function synthesizeStrategyConvictionBrief(params: {
     }
   }
 
-  // Blend on-chain 11-Layer Shield score (85% weight) with research sentiment signal (15% weight)
+  // Blend on-chain 12-Layer Shield score (85% weight) with research sentiment signal (15% weight)
   const researchSignal =
     researchHighlights.length > 0 ? Math.min(100, 75 + researchHighlights.length * 5) : params.shieldReport.convictionScore;
   const blended = Math.round(params.shieldReport.convictionScore * 0.85 + researchSignal * 0.15);
@@ -86,8 +86,8 @@ export async function synthesizeStrategyConvictionBrief(params: {
 
   const rationale =
     riskRegime === "DO_NOT_ALLOCATE"
-      ? `Allocation blocked: 11-Layer Shield score ${params.shieldReport.convictionScore}/100 (${params.shieldReport.verdict}) below Steve Capital safety mandate.`
-      : `Approved ${riskRegime} (${recommendedAllocationBps} bps): 11-Layer Shield ${params.shieldReport.convictionScore}/100, liquidity $${params.shieldReport.poolLiquidityUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}.`;
+      ? `Allocation blocked: 12-Layer Shield score ${params.shieldReport.convictionScore}/100 (${params.shieldReport.verdict}) below Steve Capital safety mandate.`
+      : `Approved ${riskRegime} (${recommendedAllocationBps} bps): 12-Layer Shield ${params.shieldReport.convictionScore}/100, liquidity $${params.shieldReport.poolLiquidityUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })}.`;
 
   const generatedAtIso = new Date().toISOString();
   const briefSha256 = crypto

@@ -6,14 +6,17 @@ import { CapitalMandateEngine, createDefaultMandate } from "../src/mandate.js";
 import {
   buildEmptyAtaRentReclaimTx,
   evaluate10LayerShield,
+  evaluate11LayerShield,
+  evaluate12LayerShield,
+  parseRawSupplyToUi,
   quoteGuardedJupiterSwap,
   STANDARD_ATA_RENT_LAMPORTS,
 } from "../src/shield-and-rent.js";
 
-describe("11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", () => {
-  it("scores clean revoked SPL tokens SAFE and blocks Token-2022 PermanentDelegate & Honeypots", () => {
+describe("12-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", () => {
+  it("scores clean revoked SPL tokens SAFE across all 12 layers, preserves 10/11-layer aliases, and blocks Token-2022 PermanentDelegate & Cartel/Hook traps", () => {
     const cleanMint = Keypair.generate().publicKey.toBase58();
-    const safeReport = evaluate10LayerShield(cleanMint, {
+    const safeReport = evaluate12LayerShield(cleanMint, {
       programOwner: TOKEN_PROGRAM_ID.toBase58(),
       decimals: 6,
       supplyUi: 1_000_000_000,
@@ -29,8 +32,41 @@ describe("11-Layer SPL / Token-2022 Risk Shield & Empty-ATA Rent Compounding", (
     });
     assert.equal(safeReport.convictionScore, 100);
     assert.equal(safeReport.verdict, "SAFE");
-    assert.equal(safeReport.layers.length, 11);
+    assert.equal(safeReport.layers.length, 12);
     assert.equal(safeReport.layers[10]?.layer, 11);
+    assert.equal(safeReport.layers[11]?.layer, 12);
+
+    // Verify backwards-compatible 11-layer and 10-layer aliases
+    assert.equal(evaluate11LayerShield, evaluate12LayerShield);
+    assert.equal(evaluate10LayerShield, evaluate12LayerShield);
+
+    // Verify BigInt raw supply conversion above Number.MAX_SAFE_INTEGER (10B tokens @ 9 decimals)
+    assert.equal(parseRawSupplyToUi("10000000000000000000", 9), 10_000_000_000);
+    assert.equal(parseRawSupplyToUi("invalid", 9), 0);
+
+    // Verify Layer 12 blocks 2-Hop Funder Cartel & Token-2022 TransferHook CPI trap
+    const cartelReport = evaluate12LayerShield(cleanMint, {
+      programOwner: TOKEN_2022_PROGRAM_ID.toBase58(),
+      decimals: 6,
+      supplyUi: 1_000_000_000,
+      mintAuthority: null,
+      freezeAuthority: null,
+      extensions: [
+        {
+          extension: "transferHook",
+          state: { programId: Keypair.generate().publicKey.toBase58() },
+        },
+      ],
+      top10HolderPct: 15.0,
+      poolLiquidityUsd: 150_000,
+      volume24hUsd: 80_000,
+      buys24h: 300,
+      sells24h: 280,
+      cartelFunderClusterPct: 42.0,
+    });
+    assert.equal(cartelReport.layers[11]?.passed, false);
+    assert.equal(cartelReport.convictionScore, 65);
+    assert.equal(cartelReport.verdict, "CAUTION");
 
     const trapMint = Keypair.generate().publicKey.toBase58();
     const trapReport = evaluate10LayerShield(trapMint, {

@@ -104,6 +104,63 @@ describe("OOBE Protocol SAP v2 Identity & Programmable Capital Mandates", () => 
     );
     assert.ok(new PublicKey(receipt.escrowPda));
     assert.ok(new PublicKey(receipt.settlementReceiptPda));
+
+    // Defensive math guards: NaN/Infinity/negative inputs must fail closed without throwing RangeError
+    const nanEval = engine.evaluate({
+      intentId: "intent-nan",
+      protocol: "jupiter",
+      actorWallet: DEFAULT_TREASURY_WALLET,
+      recipientWallet: recipient,
+      tokenMint: usdcMint,
+      amountUsd: Number.NaN,
+      slippageBps: Number.NaN,
+      convictionScore: Number.POSITIVE_INFINITY,
+      timestampUnix: Number.NaN,
+    });
+    assert.equal(nanEval.allowed, false);
+    assert.ok(nanEval.reasons.includes("NON_FINITE_AMOUNT_USD"));
+    assert.ok(nanEval.reasons.includes("INVALID_TIMESTAMP_UNIX"));
+    assert.ok(nanEval.reasons.some((r) => r.startsWith("INVALID_SLIPPAGE_BPS")));
+
+    // Exact micro-USD rolling spend precision (0.1 + 0.2 === 0.3 exact cap)
+    const precisionEngine = new CapitalMandateEngine(
+      createDefaultMandate(DEFAULT_TREASURY_WALLET, {
+        maxSingleTxUsd: 1,
+        maxDailySpendUsd: 0.3,
+        minConvictionScore: 50,
+      })
+    );
+    const p1 = precisionEngine.evaluate(
+      {
+        intentId: "p-1",
+        protocol: "jupiter",
+        actorWallet: DEFAULT_TREASURY_WALLET,
+        recipientWallet: recipient,
+        tokenMint: usdcMint,
+        amountUsd: 0.1,
+        convictionScore: 90,
+        poolLiquidityUsd: 50_000,
+        timestampUnix: 1_794_940_000,
+      },
+      true
+    );
+    const p2 = precisionEngine.evaluate(
+      {
+        intentId: "p-2",
+        protocol: "jupiter",
+        actorWallet: DEFAULT_TREASURY_WALLET,
+        recipientWallet: recipient,
+        tokenMint: usdcMint,
+        amountUsd: 0.2,
+        convictionScore: 90,
+        poolLiquidityUsd: 50_000,
+        timestampUnix: 1_794_940_005,
+      },
+      true
+    );
+    assert.equal(p1.allowed, true);
+    assert.equal(p2.allowed, true);
+    assert.equal(p2.remainingDailyBudgetUsd, 0);
   });
 
   it("enforces anti-circular transfer rules, sub-agent delegation bounds, and Ed25519 attestations", () => {

@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
-import { Keypair, LAMPORTS_PER_SOL, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { Keypair, PublicKey, VersionedTransaction } from "@solana/web3.js";
+import { microUsdBigIntToUsd, usdToMicroUsdBigInt } from "./mandate.js";
 
 export const MULTIHOPPER_MAINNET_BASE = "https://multihopper.com/api/v1";
 export const MULTIHOPPER_DEVNET_BASE = "https://devnet.multihopper.com/api/v1";
@@ -99,9 +100,24 @@ export interface MultiHopperServerCard {
   tools: Array<{ name: string; description: string }>;
 }
 
-const HOP_ATA_RENT_LAMPORTS = 1_900_000; // ~0.0019 SOL per TRM-screened hop per OpenAPI spec
+export const HOP_ATA_RENT_LAMPORTS = 1_900_000; // ~0.0019 SOL per TRM-screened hop per OpenAPI spec
+export const HOP_ATA_RENT_LAMPORTS_BIGINT = 1_900_000n;
+const MH_LAMPORTS_PER_SOL_BIGINT = 1_000_000_000n;
+export const MAX_SPL_RAW_U64 = 18_446_744_073_709_551_615n;
 const MAX_WAIT_SECONDS = 2_592_000; // 30 days
 const MIN_WAIT_SECONDS = 20;
+const BASE10_INTEGER_REGEX = /^-?\d+$/;
+
+function parseStrictRawBigInt(raw: string): bigint {
+  if (typeof raw !== "string") {
+    throw new Error("Expected base-10 integer string");
+  }
+  const clean = raw.trim();
+  if (!BASE10_INTEGER_REGEX.test(clean)) {
+    throw new Error("Non-decimal raw amount string");
+  }
+  return BigInt(clean);
+}
 
 export function validateMultiHopperRequest(req: TransferCreateRequest): RouteValidationResult {
   const errors: string[] = [];
@@ -115,8 +131,12 @@ export function validateMultiHopperRequest(req: TransferCreateRequest): RouteVal
 
   let totalRaw = 0n;
   try {
-    totalRaw = BigInt(req.amountRaw);
-    if (totalRaw <= 0n) errors.push("MH_AMOUNT_RAW_MUST_BE_POSITIVE");
+    totalRaw = parseStrictRawBigInt(req.amountRaw);
+    if (totalRaw <= 0n) {
+      errors.push("MH_AMOUNT_RAW_MUST_BE_POSITIVE");
+    } else if (totalRaw > MAX_SPL_RAW_U64) {
+      errors.push("MH_AMOUNT_RAW_EXCEEDS_SPL_U64_MAX");
+    }
   } catch {
     errors.push("MH_AMOUNT_RAW_INVALID_BIGINT");
   }
@@ -159,21 +179,26 @@ export function validateMultiHopperRequest(req: TransferCreateRequest): RouteVal
       }
       destinationWallets.add(d.wallet);
       try {
-        const s = BigInt(d.amountRaw);
-        if (s <= 0n) errors.push(`MH_NON_POSITIVE_DESTINATION_SHARE:${d.wallet}`);
-        shareSum += s;
+        const s = parseStrictRawBigInt(d.amountRaw);
+        if (s <= 0n) {
+          errors.push(`MH_NON_POSITIVE_DESTINATION_SHARE:${d.wallet}`);
+        } else if (s > MAX_SPL_RAW_U64) {
+          errors.push(`MH_DESTINATION_SHARE_EXCEEDS_U64:${d.wallet}`);
+        } else {
+          shareSum += s;
+        }
       } catch {
         errors.push(`MH_INVALID_DESTINATION_SHARE:${d.wallet}`);
       }
     }
-    if (totalRaw > 0n && shareSum !== totalRaw) {
+    if (totalRaw > 0n && totalRaw <= MAX_SPL_RAW_U64 && shareSum !== totalRaw) {
       errors.push(
         `MH_DESTINATION_SHARES_SUM_MISMATCH:${shareSum.toString()}!=${totalRaw.toString()}`
       );
     }
   }
 
-  let hopCount = req.hops ?? 3;
+  let hopCount = req.hops !== undefined && Number.isInteger(req.hops) ? req.hops : 3;
   let totalWaitSeconds = 0;
 
   if (req.route) {
@@ -189,10 +214,15 @@ export function validateMultiHopperRequest(req: TransferCreateRequest): RouteVal
     const seenHopWallets = new Set<string>();
     for (let i = 0; i < req.route.hops.length; i++) {
       const h = req.route.hops[i];
-      if (h.waitSeconds < MIN_WAIT_SECONDS || h.waitSeconds > MAX_WAIT_SECONDS) {
-        errors.push(`MH_018_HOP_WAIT_OUT_OF_BOUNDS:index_${i}:${h.waitSeconds}`);
+      if (
+        !Number.isInteger(h.waitSeconds) ||
+        h.waitSeconds < MIN_WAIT_SECONDS ||
+        h.waitSeconds > MAX_WAIT_SECONDS
+      ) {
+        errors.push(`MH_018_HOP_WAIT_OUT_OF_BOUNDS:index_${i}:${String(h.waitSeconds)}`);
+      } else {
+        totalWaitSeconds += h.waitSeconds;
       }
-      totalWaitSeconds += h.waitSeconds;
 
       if ("wallet" in h) {
         try {
@@ -220,8 +250,11 @@ export function validateMultiHopperRequest(req: TransferCreateRequest): RouteVal
     if (totalWaitSeconds > MAX_WAIT_SECONDS) {
       errors.push(`MH_018_CUMULATIVE_WAIT_EXCEEDS_30_DAYS:${totalWaitSeconds}`);
     }
-  } else if (req.hops !== undefined && (req.hops < 3 || req.hops > 10)) {
-    errors.push(`MH_STANDARD_HOPS_OUT_OF_RANGE_3_TO_10:${req.hops}`);
+  } else if (
+    req.hops !== undefined &&
+    (!Number.isInteger(req.hops) || req.hops < 3 || req.hops > 10)
+  ) {
+    errors.push(`MH_STANDARD_HOPS_OUT_OF_RANGE_3_TO_10:${String(req.hops)}`);
   }
 
   return {
@@ -238,32 +271,49 @@ export function calculateRouteEconomics(params: {
   hopCount: number;
   destinationCount?: number;
 }): RouteEconomicsSummary {
+  if (!Number.isFinite(params.principalUsd) || params.principalUsd < 0) {
+    throw new Error(`principalUsd must be a non-negative finite number, got ${String(params.principalUsd)}`);
+  }
+  if (!Number.isInteger(params.hopCount) || params.hopCount < 0 || params.hopCount > 1_000) {
+    throw new Error(`hopCount must be a non-negative integer, got ${String(params.hopCount)}`);
+  }
   const destCount = params.destinationCount ?? 1;
+  if (!Number.isInteger(destCount) || destCount < 1 || destCount > 1_000) {
+    throw new Error(`destinationCount must be a positive integer, got ${String(destCount)}`);
+  }
+
   const fullRateFeeBps = 50; // 0.50%
   const partnerRevenueShareBps = 25; // 0.25% ($2,500 per $1,000,000 routed)
-  const totalProtocolFeeUsd = Number(((params.principalUsd * fullRateFeeBps) / 10_000).toFixed(6));
-  const partnerRevenueShareUsd = Number(
-    ((params.principalUsd * partnerRevenueShareBps) / 10_000).toFixed(6)
-  );
-  const competitionPoolContributionUsd = Number(
-    (totalProtocolFeeUsd - partnerRevenueShareUsd).toFixed(6)
-  );
-  const extraDispersionSteps = destCount > 1 ? destCount : 0;
-  const estimatedHopAtaRentLamports =
-    (params.hopCount + extraDispersionSteps) * HOP_ATA_RENT_LAMPORTS;
 
+  // Compute BPS shares over BigInt micro-USD intermediates to eliminate IEEE-754 drift
+  const principalMicro = usdToMicroUsdBigInt(params.principalUsd);
+  const totalFeeMicro = (principalMicro * BigInt(fullRateFeeBps) + 5_000n) / 10_000n;
+  const partnerFeeMicro = (principalMicro * BigInt(partnerRevenueShareBps) + 5_000n) / 10_000n;
+  const poolContributionMicro = totalFeeMicro - partnerFeeMicro;
+
+  const extraDispersionSteps = destCount > 1 ? destCount : 0;
+  const rentLamportsBig =
+    BigInt(params.hopCount + extraDispersionSteps) * HOP_ATA_RENT_LAMPORTS_BIGINT;
+  const estimatedHopAtaRentLamports = Number(rentLamportsBig);
+  const solWhole = rentLamportsBig / MH_LAMPORTS_PER_SOL_BIGINT;
+  const solFracMicro = ((rentLamportsBig % MH_LAMPORTS_PER_SOL_BIGINT) + 500n) / 1_000n;
+  const estimatedHopAtaRentSol = Number(
+    `${solWhole.toString()}.${solFracMicro.toString().padStart(6, "0")}`
+  );
+
+  const canonicalPrincipalUsd = microUsdBigIntToUsd(principalMicro);
   return {
-    principalUsd: params.principalUsd,
-    qualifyingCompetitionVolumeUsd: params.principalUsd,
+    principalUsd: canonicalPrincipalUsd,
+    qualifyingCompetitionVolumeUsd: canonicalPrincipalUsd,
     fullRateFeeBps,
-    totalProtocolFeeUsd,
+    totalProtocolFeeUsd: microUsdBigIntToUsd(totalFeeMicro),
     partnerRevenueShareBps,
-    partnerRevenueShareUsd,
-    competitionPoolContributionUsd,
+    partnerRevenueShareUsd: microUsdBigIntToUsd(partnerFeeMicro),
+    competitionPoolContributionUsd: microUsdBigIntToUsd(poolContributionMicro),
     hopCount: params.hopCount,
     destinationCount: destCount,
     estimatedHopAtaRentLamports,
-    estimatedHopAtaRentSol: Number((estimatedHopAtaRentLamports / LAMPORTS_PER_SOL).toFixed(6)),
+    estimatedHopAtaRentSol,
   };
 }
 
